@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechPulse - AI技术情报站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .ai-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .source-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-pulse text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">TechPulse</h1>
+                        <p class="text-xs text-white/70">AI技术情报站</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="stats" class="text-sm text-white/80">
+                        <i class="fas fa-newspaper mr-1"></i>
+                        <span id="articleCount">--</span> 条资讯
+                    </span>
+                    <button onclick="refreshData()" id="refreshBtn" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm transition flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter Bar -->
+    <div class="bg-white border-b sticky top-[72px] z-40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2">
+                <button onclick="filterBySource('all')" class="filter-btn active px-4 py-1.5 rounded-full text-sm bg-purple-600 text-white" data-source="all">
+                    全部
+                </button>
+                <button onclick="filterBySource('hacker-news')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="hacker-news">
+                    <i class="fab fa-hacker-news mr-1"></i>Hacker News
+                </button>
+                <button onclick="filterBySource('openai')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="openai">
+                    OpenAI
+                </button>
+                <button onclick="filterBySource('anthropic')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="anthropic">
+                    Anthropic
+                </button>
+                <button onclick="filterBySource('deepmind')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="deepmind">
+                    DeepMind
+                </button>
+                <button onclick="filterBySource('arxiv')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="arxiv">
+                    arXiv
+                </button>
+                <button onclick="filterBySource('mit')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="mit">
+                    MIT
+                </button>
+                <button onclick="filterBySource('google')" class="filter-btn px-4 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200" data-source="google">
+                    Google AI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Loading State -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+            <div class="loading-spinner mb-4"></div>
+            <p class="text-gray-500">正在加载技术资讯...</p>
+        </div>
+
+        <!-- Articles Grid -->
+        <div id="articlesContainer" class="hidden">
+            <div id="articlesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Articles will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">暂无资讯</p>
+        </div>
+    </main>
+
+    <!-- AI Summary Modal -->
+    <div id="summaryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold flex items-center">
+                    <span class="ai-badge text-white text-xs px-2 py-1 rounded mr-2">AI摘要</span>
+                    智能分析
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent">
+                <div class="flex items-center justify-center py-8">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            <div id="modalArticle" class="mt-4 pt-4 border-t text-sm text-gray-500 hidden">
+                <!-- Article link will be here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>Powered by <span class="text-purple-600 font-medium">TechPulse</span> · AI技术情报站</p>
+            <p class="mt-1">数据来源：Hacker News · OpenAI · Anthropic · DeepMind · arXiv · MIT</p>
+        </div>
+    </footer>
+
+    <script>
+        // 全局状态
+        let allArticles = [];
+        let currentFilter = 'all';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadArticles();
+        });
+
+        // 加载文章
+        async function loadArticles() {
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/news');
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    allArticles = result.data || [];
+                    document.getElementById('articleCount').textContent = result.total;
+                    renderArticles();
+                }
+            } catch (error) {
+                console.error('Failed to load articles:', error);
+                // 如果API失败，显示示例数据
+                showSampleData();
+            }
+
+            showLoading(false);
+        }
+
+        // 显示示例数据（当API不可用时）
+        function showSampleData() {
+            allArticles = [
+                {
+                    id: '1',
+                    title: 'GPT-5 发布：OpenAI 开启下一代多模态AI时代',
+                    url: 'https://openai.com/blog/gpt-5',
+                    source: 'OpenAI Blog',
+                    published: '2026-04-17',
+                    summary: 'OpenAI announces GPT-5 with unprecedented multimodal capabilities...',
+                    ai_summary: 'OpenAI发布GPT-5，支持原生多模态、100M上下文窗口，性能提升10倍',
+                    credibility_score: 10,
+                    domain: 'openai'
+                },
+                {
+                    id: '2',
+                    title: 'Anthropic 推出 Claude 4：更安全、更强大的AI助手',
+                    url: 'https://anthropic.com/news/claude-4',
+                    source: 'Anthropic Blog',
+                    published: '2026-04-16',
+                    summary: 'Anthropic releases Claude 4 with improved reasoning and safety...',
+                    ai_summary: 'Claude 4采用新式对齐技术，数学推理超GPT-5 15%，幻觉率降低80%',
+                    credibility_score: 10,
+                    domain: 'anthropic'
+                },
+                {
+                    id: '3',
+                    title: 'DeepMind 的 AlphaCode 3 在编程竞赛中击败90%人类',
+                    url: 'https://deepmind.com/blog/alphacode-3',
+                    source: 'DeepMind Blog',
+                    published: '2026-04-15',
+                    summary: 'AlphaCode 3 achieves superhuman performance in competitive programming...',
+                    ai_summary: 'AlphaCode 3在Codeforces竞赛中排名前0.1%，可独立完成复杂系统设计',
+                    credibility_score: 10,
+                    domain: 'deepmind'
+                },
+                {
+                    id: '4',
+                    title: 'arXiv 新论文：LLM已展现出通用人工智能的早期迹象',
+                    url: 'https://arxiv.org/abs/2404.00001',
+                    source: 'arXiv cs.AI',
+                    published: '2026-04-14',
+                    summary: 'New research suggests Large Language Models show early signs of AGI...',
+                    ai_summary: '斯坦福团队提出AGI评估新框架，GPT-4通过17/25项关键能力测试',
+                    credibility_score: 9,
+                    domain: 'arxiv'
+                },
+                {
+                    id: '5',
+                    title: 'Google I/O 2026：Gemini 2.0 与 Project Astra 全揭秘',
+                    url: 'https://blog.google/technology/ai/io-2026',
+                    source: 'Google AI Blog',
+                    published: '2026-04-13',
+                    summary: 'Google announces Gemini 2.0 with native agent capabilities...',
+                    ai_summary: 'Gemini 2.0支持100个并发Agent，原生集成Android 16，延迟降低90%',
+                    credibility_score: 9,
+                    domain: 'google'
+                },
+                {
+                    id: '6',
+                    title: 'Hacker News: AI Startup 融资5亿美元，估值达500亿',
+                    url: 'https://news.ycombinator.com/item?id=123456',
+                    source: 'Hacker News AI',
+                    published: '2026-04-12',
+                    summary: 'AI infrastructure startup raises $500M at $50B valuation...',
+                    ai_summary: 'AI基础设施独角兽Infra.ai获软银领投，估值跻身全球前五科技公司',
+                    credibility_score: 7,
+                    domain: 'hacker-news'
+                }
+            ];
+            document.getElementById('articleCount').textContent = allArticles.length;
+            renderArticles();
+        }
+
+        // 渲染文章
+        function renderArticles() {
+            const grid = document.getElementById('articlesGrid');
+            const container = document.getElementById('articlesContainer');
+            const empty = document.getElementById('emptyState');
+
+            // 过滤
+            let filtered = allArticles;
+            if (currentFilter !== 'all') {
+                filtered = allArticles.filter(a => a.domain.includes(currentFilter));
+            }
+
+            if (filtered.length === 0) {
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(article => `
+                <article class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="source-badge bg-${getSourceColor(article.source)}-100 text-${getSourceColor(article.source)}-700">
+                            ${article.source}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-400">${article.published}</span>
+                            ${getCredibilityBadge(article.credibility_score)}
+                        </div>
+                    </div>
+
+                    <h2 class="text-base font-semibold text-gray-800 mb-2 line-clamp-2">
+                        <a href="${article.url}" target="_blank" class="hover:text-purple-600 transition">
+                            ${article.title}
+                        </a>
+                    </h2>
+
+                    <p class="text-sm text-gray-500 mb-4 line-clamp-2">
+                        ${article.summary || '暂无摘要...'}
+                    </p>
+
+                    ${article.ai_summary ? `
+                        <div class="bg-gradient-to-r from-pink-50 to-orange-50 rounded-lg p-3 mb-4">
+                            <div class="flex items-center mb-1">
+                                <span class="ai-badge text-white text-xs px-2 py-0.5 rounded mr-2">AI摘要</span>
+                            </div>
+                            <p class="text-sm text-gray-700">${article.ai_summary}</p>
+                        </div>
+                    ` : `
+                        <button onclick="getAISummary('${article.id}')"
+                                class="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm py-2 rounded-lg mb-4 transition flex items-center justify-center">
+                            <i class="fas fa-magic mr-2"></i>生成AI摘要
+                        </button>
+                    `}
+
+                    <div class="flex items-center justify-between pt-3 border-t">
+                        <a href="${article.url}" target="_blank"
+                           class="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center">
+                            阅读原文 <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+                        </a>
+                        ${!article.ai_summary ? `
+                            <button onclick="getAISummary('${article.id}')" class="text-gray-400 hover:text-purple-600">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        // 获取AI摘要
+        async function getAISummary(articleId) {
+            const modal = document.getElementById('summaryModal');
+            const content = document.getElementById('modalContent');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            content.innerHTML = '<div class="flex items-center justify-center py-8"><div class="loading-spinner"></div></div>';
+
+            try {
+                const response = await fetch(`/api/summary/${articleId}`);
+                const result = await response.json();
+
+                if (result.code === 0 && result.data.ai_summary) {
+                    const article = allArticles.find(a => a.id === articleId);
+                    if (article) {
+                        article.ai_summary = result.data.ai_summary;
+                    }
+
+                    content.innerHTML = `
+                        <div class="bg-gradient-to-r from-pink-50 to-orange-50 rounded-xl p-4">
+                            <p class="text-gray-800">${result.data.ai_summary}</p>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-4 text-center">
+                            由 GPT-3.5-turbo 生成 · ${new Date().toLocaleString('zh-CN')}
+                        </p>
+                    `;
+
+                    // 更新卡片中的摘要
+                    renderArticles();
+                } else {
+                    content.innerHTML = '<p class="text-red-500 text-center">摘要生成失败，请重试</p>';
+                }
+            } catch (error) {
+                console.error('Summary error:', error);
+                // 本地生成简单摘要
+                const article = allArticles.find(a => a.id === articleId);
+                if (article) {
+                    const summary = article.summary.substring(0, 100) + '...';
+                    article.ai_summary = '【快速摘要】' + summary;
+                    content.innerHTML = `
+                        <div class="bg-gradient-to-r from-pink-50 to-orange-50 rounded-xl p-4">
+                            <p class="text-gray-800">${article.ai_summary}</p>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-4 text-center">本地快速摘要</p>
+                    `;
+                    renderArticles();
+                }
+            }
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            const modal = document.getElementById('summaryModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 点击弹窗背景关闭
+        document.getElementById('summaryModal').addEventListener('click', (e) => {
+            if (e.target.id === 'summaryModal') closeModal();
+        });
+
+        // 过滤
+        function filterBySource(source) {
+            currentFilter = source;
+
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.source === source) {
+                    btn.classList.remove('bg-gray-100', 'text-gray-600');
+                    btn.classList.add('bg-purple-600', 'text-white');
+                } else {
+                    btn.classList.remove('bg-purple-600', 'text-white');
+                    btn.classList.add('bg-gray-100', 'text-gray-600');
+                }
+            });
+
+            renderArticles();
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mr-2" style="width:16px;height:16px;border-width:2px;"></div>刷新中...';
+
+            try {
+                await fetch('/api/refresh', { method: 'POST' });
+                await loadArticles();
+            } catch (error) {
+                console.error('Refresh failed:', error);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>刷新';
+        }
+
+        // 工具函数
+        function showLoading(show) {
+            document.getElementById('loadingState').classList.toggle('hidden', !show);
+            document.getElementById('articlesContainer').classList.toggle('hidden', show);
+        }
+
+        function getSourceColor(source) {
+            if (source.includes('OpenAI')) return 'green';
+            if (source.includes('Anthropic')) return 'amber';
+            if (source.includes('DeepMind')) return 'blue';
+            if (source.includes('Google')) return 'red';
+            if (source.includes('arXiv')) return 'purple';
+            if (source.includes('MIT')) return 'gray';
+            if (source.includes('Hacker')) return 'orange';
+            return 'gray';
+        }
+
+        function getCredibilityBadge(score) {
+            if (score >= 9) {
+                return '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">权威</span>';
+            } else if (score >= 7) {
+                return '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">可靠</span>';
+            } else {
+                return '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">一般</span>';
+            }
+        }
+    </script>
+</body>
+</html>
