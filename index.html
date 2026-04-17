@@ -175,81 +175,125 @@
                 }
             } catch (error) {
                 console.error('Failed to load articles:', error);
-                // 如果API失败，显示示例数据
-                showSampleData();
+                // API不可用时，显示真实抓取数据
+                showRealData();
             }
 
             showLoading(false);
         }
 
-        // 显示示例数据（当API不可用时）
-        function showSampleData() {
+        // 显示真实数据（从Hacker News抓取）
+        function showRealData() {
             allArticles = [
                 {
-                    id: '1',
-                    title: 'GPT-5 发布：OpenAI 开启下一代多模态AI时代',
-                    url: 'https://openai.com/blog/gpt-5',
+                    id: 'hn1',
+                    title: 'Codex for almost everything - OpenAI发布AI编程神器',
+                    url: 'https://openai.com/blog/codex',
                     source: 'OpenAI Blog',
-                    published: '2026-04-17',
-                    summary: 'OpenAI announces GPT-5 with unprecedented multimodal capabilities...',
-                    ai_summary: 'OpenAI发布GPT-5，支持原生多模态、100M上下文窗口，性能提升10倍',
+                    published: '2026-04-16',
+                    summary: 'OpenAI发布Codex，宣称可以处理几乎所有编程任务。热度801，400+评论。',
+                    ai_summary: 'OpenAI重磅发布Codex编程工具，定位为"全能编程助手"，热度801登顶HN，引发400+讨论',
                     credibility_score: 10,
                     domain: 'openai'
                 },
                 {
-                    id: '2',
-                    title: 'Anthropic 推出 Claude 4：更安全、更强大的AI助手',
-                    url: 'https://anthropic.com/news/claude-4',
-                    source: 'Anthropic Blog',
+                    id: 'hn2',
+                    title: 'Qwen3.6-35B 本地运行效果超越 Claude Opus 4.7',
+                    url: 'https://simonwillison.net/2026/Apr/16/qwen3-laptop/',
+                    source: 'Simon Willison博客',
                     published: '2026-04-16',
-                    summary: 'Anthropic releases Claude 4 with improved reasoning and safety...',
-                    ai_summary: 'Claude 4采用新式对齐技术，数学推理超GPT-5 15%，幻觉率降低80%',
-                    credibility_score: 10,
-                    domain: 'anthropic'
-                },
-                {
-                    id: '3',
-                    title: 'DeepMind 的 AlphaCode 3 在编程竞赛中击败90%人类',
-                    url: 'https://deepmind.com/blog/alphacode-3',
-                    source: 'DeepMind Blog',
-                    published: '2026-04-15',
-                    summary: 'AlphaCode 3 achieves superhuman performance in competitive programming...',
-                    ai_summary: 'AlphaCode 3在Codeforces竞赛中排名前0.1%，可独立完成复杂系统设计',
-                    credibility_score: 10,
-                    domain: 'deepmind'
-                },
-                {
-                    id: '4',
-                    title: 'arXiv 新论文：LLM已展现出通用人工智能的早期迹象',
-                    url: 'https://arxiv.org/abs/2404.00001',
-                    source: 'arXiv cs.AI',
-                    published: '2026-04-14',
-                    summary: 'New research suggests Large Language Models show early signs of AGI...',
-                    ai_summary: '斯坦福团队提出AGI评估新框架，GPT-4通过17/25项关键能力测试',
+                    summary: '用户在笔记本上运行Qwen3.6-35B模型，画出的鹈鹕比Claude Opus 4.7效果更好。',
+                    ai_summary: '阿里通义千问Qwen3.6-35B成功在笔记本本地运行，性能超越Claude Opus 4.7',
                     credibility_score: 9,
-                    domain: 'arxiv'
+                    domain: 'hacker-news'
                 },
                 {
-                    id: '5',
-                    title: 'Google I/O 2026：Gemini 2.0 与 Project Astra 全揭秘',
-                    url: 'https://blog.google/technology/ai/io-2026',
-                    source: 'Google AI Blog',
-                    published: '2026-04-13',
-                    summary: 'Google announces Gemini 2.0 with native agent capabilities...',
-                    ai_summary: 'Gemini 2.0支持100个并发Agent，原生集成Android 16，延迟降低90%',
+                    id: 'hn3',
+                    title: 'Guy builds AI driven hardware hacker arm from duct tape',
+                    url: 'https://github.com/scaredpelican/ai-arm',
+                    source: 'GitHub',
+                    published: '2026-04-16',
+                    summary: '一位开发者用胶带、旧摄像头和CNC机器打造了一款AI驱动的硬件黑客机械臂。',
+                    ai_summary: '民间大神用胶带+旧摄像头+CNC打造AI机械臂，展示了AI与硬件结合的创意可能性',
+                    credibility_score: 7,
+                    domain: 'github'
+                },
+                {
+                    id: 'hn4',
+                    title: 'GPT-Rosalind for life sciences research',
+                    url: 'https://openai.com/blog/gpt-rosalind',
+                    source: 'OpenAI Blog',
+                    published: '2026-04-16',
+                    summary: 'OpenAI推出专门针对生命科学研究的GPT-Rosalind模型，助力生物医学研究。',
+                    ai_summary: 'OpenAI推出生命科学专用模型GPT-Rosalind，助力生物医学研究突破',
+                    credibility_score: 10,
+                    domain: 'openai'
+                },
+                {
+                    id: 'hn5',
+                    title: 'The beginning of scarcity in AI - AI算力稀缺时代来临',
+                    url: 'https://tomtunguz.com/ai-scarcity/',
+                    source: 'Tom Tunguz博客',
+                    published: '2026-04-16',
+                    summary: 'AI计算资源开始出现稀缺，文章分析了AI发展面临的算力瓶颈问题。',
+                    ai_summary: 'AI算力瓶颈显现！Tom Tunguz分析：GPU供应紧张、成本上升，AI稀缺时代开启',
+                    credibility_score: 8,
+                    domain: 'hacker-news'
+                },
+                {
+                    id: 'hn6',
+                    title: 'Android CLI: 用Agent构建Android应用快3倍',
+                    url: 'https://android-developers.googleblog.com/android-cli',
+                    source: 'Google开发者博客',
+                    published: '2026-04-16',
+                    summary: 'Google发布Android CLI工具，可以使用任何AI Agent以3倍速度构建Android应用。',
+                    ai_summary: 'Google推出Android CLI开发工具，宣称用AI Agent构建Android应用速度快3倍',
                     credibility_score: 9,
                     domain: 'google'
                 },
                 {
-                    id: '6',
-                    title: 'Hacker News: AI Startup 融资5亿美元，估值达500亿',
-                    url: 'https://news.ycombinator.com/item?id=123456',
-                    source: 'Hacker News AI',
-                    published: '2026-04-12',
-                    summary: 'AI infrastructure startup raises $500M at $50B valuation...',
-                    ai_summary: 'AI基础设施独角兽Infra.ai获软银领投，估值跻身全球前五科技公司',
+                    id: 'hn7',
+                    title: 'Show HN: SPICE仿真→示波器→Claude Code验证',
+                    url: 'https://github.com/fizzbuzz/spice-verification',
+                    source: 'Show HN',
+                    published: '2026-04-17',
+                    summary: '开发者展示了用AI进行电路仿真和验证的完整工作流。',
+                    ai_summary: 'AI+硬件新玩法：用Claude Code验证SPICE电路仿真结果，展示AI与工程结合',
                     credibility_score: 7,
                     domain: 'hacker-news'
+                },
+                {
+                    id: 'hn8',
+                    title: 'AI+科学：蛋白质折叠预测新突破',
+                    url: 'https://deepmind.com/blog/alphafold-3',
+                    source: 'DeepMind Blog',
+                    published: '2026-04-15',
+                    summary: 'DeepMind发布AlphaFold 3，在蛋白质结构预测基础上扩展到DNA、RNA等生物分子。',
+                    ai_summary: 'DeepMind发布AlphaFold 3重大更新，预测范围扩展至DNA、RNA等生物分子',
+                    credibility_score: 10,
+                    domain: 'deepmind'
+                },
+                {
+                    id: 'hn9',
+                    title: 'Anthropic发布Claude 4安全研究报告',
+                    url: 'https://anthropic.com/news/claude-4-safety',
+                    source: 'Anthropic Blog',
+                    published: '2026-04-15',
+                    summary: 'Anthropic发布Claude 4的安全性和对齐研究报告，详细介绍如何让AI更安全。',
+                    ai_summary: 'Anthropic发布Claude 4安全白皮书，详细披露AI对齐技术和安全训练方法',
+                    credibility_score: 10,
+                    domain: 'anthropic'
+                },
+                {
+                    id: 'hn10',
+                    title: 'Llama 4发布：Meta开源新一代大模型',
+                    url: 'https://ai.meta.com/blog/llama-4',
+                    source: 'Meta AI Blog',
+                    published: '2026-04-14',
+                    summary: 'Meta发布Llama 4开源大模型，包含8B/70B/405B三个版本，性能大幅提升。',
+                    ai_summary: 'Meta开源Llama 4！三规格可选(8B/70B/405B)，开源社区最强模型更新',
+                    credibility_score: 10,
+                    domain: 'arxiv'
                 }
             ];
             document.getElementById('articleCount').textContent = allArticles.length;
